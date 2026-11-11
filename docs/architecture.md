@@ -10,6 +10,19 @@ Read module boundaries first, then workspaces and editing, file loading and read
 
 [Modules and data flow](#modules-and-data-flow) · [Workspaces and file operations](#workspaces-and-file-operations) · [Shared reading interactions](#shared-reading-interactions) · [Format readers](#format-readers) · [Local data and diagnostics](#local-data-and-diagnostics) · [Updates and platform integration](#updates-and-platform-integration)
 
+## Linux platform boundary
+
+The Linux fork retains `glim-core` and the Rust reader/service composition. macOS Swift compilation and AppKit ownership modules remain selected only on macOS. Linux platform differences use ordinary modules, not another application or dependency graph.
+
+- `views/linux_menu.rs` uses GPUI Kit's Linux menu overlay and dispatches indexed selections through GPUI actions.
+- `views/linux_path_hint.rs` draws path hints through GPUI's tooltip layer. `reader/controls` supplies the shared GPUI toolbar without an AppKit overlay.
+- `views/reader/linux_native.rs` owns cancellable PDF-page jobs and external-app fallback state. `services/linux_pdf.rs` runs Poppler in the background, decodes only the requested page, and retains temporary unsaved HTML for external previews. PDF pages are raster previews, not searchable/selectable PDFKit documents.
+- `services/inline_images` uses Rust image decoding and sanitized resvg rendering on Linux, including the existing streaming QOI converter. `services/plist` uses Python's standard-library plist parser instead of Apple `plutil`.
+- Preferences and sessions use the XDG data directory; diagnostic logs use the XDG state directory. Linux Trash delegates to `gio trash` without a permanent-delete fallback.
+- Linux builds compile the existing libarchive C helper with the system C compiler. Mermaid/diagram rendering, embedded HTML/OpenAPI, Office/media native previews and Sparkle remain unavailable on Linux. HTML starts in source mode.
+
+See [Linux setup](linux.md) for dependencies, build commands and limitations. The remaining sections describe the upstream architecture, including macOS-only capabilities.
+
 ## Modules and data flow
 
 ### Modules and dependency direction

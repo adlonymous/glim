@@ -1,11 +1,9 @@
 //! Bounded raster previews for inline document images. Call from a background executor.
 use crate::limits as reader_limits;
 use anyhow::{Context, Result, ensure};
-use std::{
-    path::Path,
-    process::{Command, Stdio},
-    sync::Mutex,
-};
+#[cfg(target_os = "macos")]
+use std::process::{Command, Stdio};
+use std::{path::Path, sync::Mutex};
 
 const MAX_EDGE: u32 = reader_limits::INLINE_IMAGE_PREVIEW_EDGE;
 // Avoid simultaneous full-size native decode work for a document containing many images.
@@ -34,6 +32,7 @@ fn native_thumbnail(
 pub(crate) fn thumbnail_png(path: &Path, max_edge: u32) -> Result<Vec<u8>> {
     thumbnail_png_cancellable(path, max_edge, &crate::work::Cancellation::default())
 }
+#[cfg(target_os = "macos")]
 pub(crate) fn thumbnail_png_cancellable(
     path: &Path,
     max_edge: u32,
@@ -119,6 +118,71 @@ pub(crate) fn thumbnail_png_cancellable(
     Ok(std::fs::read(output)?)
 }
 
+#[cfg(target_os = "linux")]
+pub(crate) fn thumbnail_png_cancellable(
+    path: &Path,
+    max_edge: u32,
+    cancel: &crate::work::Cancellation,
+) -> Result<Vec<u8>> {
+    cancel.check()?;
+    let reader = image::ImageReader::open(path)?.with_guessed_format()?;
+    let qoi = if reader.format() == Some(image::ImageFormat::Qoi) {
+        Some(crate::qoi::prepare(path, cancel)?)
+    } else {
+        None
+    };
+    let mut reader = if let Some(qoi) = &qoi {
+        image::ImageReader::open(qoi.path())?.with_guessed_format()?
+    } else {
+        reader
+    };
+    if reader.format().is_none() {
+        let size =
+            crate::svg_preview::dimensions(path, cancel)?.context("Unsupported image format")?;
+        let svg = crate::svg_preview::prepare_thumbnail(path, size, max_edge, cancel)?;
+        let tree = resvg::usvg::Tree::from_data(
+            &std::fs::read(svg.path())?,
+            &resvg::usvg::Options::default(),
+        )?;
+        let side = size.0.max(size.1);
+        let edge = side.ceil().clamp(1., f64::from(max_edge));
+        let scale = edge as f32 / tree.size().width();
+        let width = (edge * size.0 / side).ceil().max(1.) as u32;
+        let height = (edge * size.1 / side).ceil().max(1.) as u32;
+        let mut pixmap = resvg::tiny_skia::Pixmap::new(width, height)
+            .context("Invalid SVG thumbnail dimensions")?;
+        resvg::render(
+            &tree,
+            resvg::tiny_skia::Transform::from_scale(scale, scale),
+            &mut pixmap.as_mut(),
+        );
+        cancel.check()?;
+        return Ok(pixmap.encode_png()?);
+    }
+    let mut limits = image::Limits::default();
+    limits.max_alloc = Some(reader_limits::INLINE_IMAGE_DECODED_BYTES);
+    reader.limits(limits);
+    // Convert float/HDR channels before thumbnail's integer averaging.
+    let image = reader.decode()?.to_rgba8();
+    let longest = u64::from(image.width().max(image.height()));
+    let edge = u64::from(max_edge).min(longest);
+    let width = (u64::from(image.width()) * edge / longest).max(1) as u32;
+    let height = (u64::from(image.height()) * edge / longest).max(1) as u32;
+    let image = image::imageops::thumbnail(&image, width, height);
+    cancel.check()?;
+    let mut png = std::io::Cursor::new(Vec::new());
+    image.write_to(&mut png, image::ImageFormat::Png)?;
+    cancel.check()?;
+    ensure!(
+        png.get_ref().len() as u64
+            <= u64::from(max_edge) * u64::from(max_edge) * 4
+                + reader_limits::INLINE_IMAGE_OUTPUT_OVERHEAD_BYTES,
+        "Image thumbnail exceeds output budget"
+    );
+    Ok(png.into_inner())
+}
+
+#[cfg(target_os = "macos")]
 fn sips_thumbnail(
     path: &Path,
     output: &Path,

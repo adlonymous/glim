@@ -21,9 +21,11 @@ mod json_format;
 mod lexical;
 mod markup;
 mod media;
+#[cfg_attr(target_os = "linux", path = "linux_native.rs")]
 mod native;
 mod text;
 
+#[cfg(target_os = "macos")]
 mod native_bridge;
 mod openapi;
 mod opml;
@@ -147,6 +149,15 @@ impl Reader {
             "json"
         } else if self.is_csv() {
             "csv"
+        } else if cfg!(target_os = "linux")
+            && self.telemetry_kind() == "native"
+            && self
+                .document
+                .path
+                .extension()
+                .is_some_and(|extension| extension.eq_ignore_ascii_case("pdf"))
+        {
+            "pdf"
         } else {
             self.telemetry_kind()
         }
@@ -355,7 +366,10 @@ impl Reader {
 }
 
 pub(crate) fn set_native_telemetry_consent(consent: glim_services::telemetry::Consent) {
+    #[cfg(target_os = "macos")]
     native_bridge::set_telemetry_consent(consent);
+    #[cfg(target_os = "linux")]
+    let _ = consent;
 }
 
 pub(super) fn host() -> crate::views::reader::contract::ReaderHost {

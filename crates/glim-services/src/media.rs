@@ -509,6 +509,7 @@ mod tests {
         for p in [
             "assets/branding/glim.png",
             "assets/branding/glim.svg",
+            #[cfg(target_os = "macos")]
             "assets/macos/Glim.icns",
         ] {
             assert!(read_image(&root.join(p))?.png.starts_with(b"\x89PNG"));

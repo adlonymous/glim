@@ -20,12 +20,25 @@ pub fn is_binary(path: &Path) -> bool {
 pub fn read(path: &Path, cancel: &Cancellation) -> Result<TextPage> {
     cancel.check()?;
     let output = tempfile::NamedTempFile::new()?;
-    let status = crate::work::run(
-        Command::new("/usr/bin/plutil")
+    #[cfg(target_os = "macos")]
+    let mut command = {
+        let mut command = Command::new("/usr/bin/plutil");
+        command
             .args(["-convert", "xml1", "-o"])
             .arg(output.path())
             .arg("--")
-            .arg(path)
+            .arg(path);
+        command
+    };
+    #[cfg(target_os = "linux")]
+    let mut command = {
+        let mut command = Command::new("python3");
+        command.args(["-c", "import plistlib,sys; source=open(sys.argv[1],'rb'); value=plistlib.load(source); source.close(); destination=open(sys.argv[2],'wb'); plistlib.dump(value,destination,sort_keys=False); destination.close()"])
+            .arg(path).arg(output.path());
+        command
+    };
+    let status = crate::work::run(
+        command
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null()),

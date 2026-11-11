@@ -555,23 +555,21 @@ mod tests {
             "../../../../../assets/reader-contracts/book.epub.json"
         ))
         .unwrap();
-        for (name, text) in entries {
+        for (name, text) in &entries {
             let path = dir.path().join(name);
             std::fs::create_dir_all(path.parent().unwrap()).unwrap();
             std::fs::write(path, text).unwrap();
         }
         let path = dir.path().join("fixture.epub");
-        // macOS's archive tool is used only to assemble the test fixture.
-        let result = std::process::Command::new("/usr/bin/zip")
-            .current_dir(dir.path())
-            .args(["-q", "-r", "fixture.epub", "mimetype", "META-INF", "OPS"])
-            .output()
-            .unwrap();
-        assert!(
-            result.status.success(),
-            "{}",
-            String::from_utf8_lossy(&result.stderr)
-        );
+        use std::io::Write;
+        let mut archive = zip::ZipWriter::new(std::fs::File::create(&path).unwrap());
+        for (name, text) in &entries {
+            archive
+                .start_file(name, zip::write::SimpleFileOptions::default())
+                .unwrap();
+            archive.write_all(text.as_bytes()).unwrap();
+        }
+        archive.finish().unwrap();
         (dir, path)
     }
     fn open(

@@ -66,7 +66,9 @@ pub(super) const READERS: &[FormatReader] = &[
     },
     FormatReader {
         id: "native",
-        accepts: preview::can_open,
+        accepts: |path| {
+            preview::can_open(path) && !(cfg!(target_os = "linux") && media::supports(path))
+        },
         open: |p, _| Ok(Content::Native(p.to_path_buf(), false, false)),
     },
     FormatReader {

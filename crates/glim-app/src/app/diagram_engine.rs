@@ -1,9 +1,17 @@
 //! Private renderer subprocess entry point, before GPUI initialization. The
 //! system WebView exists only in this process; Markdown HTML never enters it.
+#[cfg(target_os = "macos")]
 use glim_services::limits as reader_limits;
 
+#[cfg(target_os = "macos")]
 include!(concat!(env!("OUT_DIR"), "/diagram_assets.rs"));
 
+#[cfg(target_os = "linux")]
+pub fn run() -> anyhow::Result<()> {
+    anyhow::bail!("Diagram rendering is not yet available on Linux; use the Markdown source view")
+}
+
+#[cfg(target_os = "macos")]
 pub fn run() -> anyhow::Result<()> {
     use anyhow::{Context, ensure};
     use std::{

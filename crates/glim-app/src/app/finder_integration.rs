@@ -2,6 +2,7 @@
 #![allow(unsafe_code)]
 use gpui_kit::*;
 
+#[cfg(target_os = "macos")]
 unsafe extern "C" {
     fn glim_finder_manage();
 }
@@ -14,6 +15,12 @@ pub fn init(cx: &mut App) {
     cx.set_global(FinderRequests::default());
 }
 
+#[cfg(target_os = "linux")]
+pub fn manage(cx: &mut App) {
+    cx.open_url("file:///usr/share/applications");
+}
+
+#[cfg(target_os = "macos")]
 pub fn manage(cx: &mut App) {
     cx.defer(|_| {
         // SAFETY: system extension management must be opened on the UI thread.

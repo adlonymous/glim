@@ -4,6 +4,18 @@ use anyhow::{Context, Result};
 use std::{collections::BTreeMap, path::PathBuf};
 
 pub(crate) fn directory() -> Result<PathBuf> {
+    #[cfg(target_os = "linux")]
+    {
+        let base = std::env::var_os("XDG_DATA_HOME")
+            .map(PathBuf::from)
+            .filter(|path| path.is_absolute())
+            .unwrap_or(
+                PathBuf::from(std::env::var_os("HOME").context("Home directory is unavailable")?)
+                    .join(".local/share"),
+            );
+        Ok(base.join("glim"))
+    }
+    #[cfg(not(target_os = "linux"))]
     Ok(
         PathBuf::from(std::env::var_os("HOME").context("Home directory is unavailable")?)
             .join("Library/Application Support/Glim"),

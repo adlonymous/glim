@@ -1,6 +1,12 @@
 <p align="center"><img src="assets/branding/repository-banner.svg" alt="Glim — documents, data and code in one Mac workspace. Free and open source; Apple Silicon and Intel." width="100%" /></p>
 
-# Glim · Your files in one Mac workspace
+# Glim Linux fork
+
+This fork adds a Linux development build to [upstream Glim](https://github.com/glimapp/glim). See [Linux setup and current limitations](docs/linux.md) before building. Contributor instructions are in [AGENTS.md](AGENTS.md).
+
+The upstream macOS description below does not describe Linux feature parity.
+
+## Upstream Glim · Your files in one Mac workspace
 
 Glim is a free, open-source file viewer for Mac. Read Markdown with Mermaid diagrams, inspect JSON trees and CSV tables, and keep PDFs, images, Office documents and code in adjacent tabs. Ordinary UTF-8 text supports small edits and saving.
 

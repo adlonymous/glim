@@ -160,6 +160,11 @@ fn binary_plist_preview_decodes_without_changing_original() -> Result<()> {
         &path,
         r#"<?xml version="1.0"?><plist version="1.0"><dict><key>Name</key><string>Fixture</string></dict></plist>"#,
     )?;
+    #[cfg(target_os = "linux")]
+    assert!(std::process::Command::new("python3")
+        .args(["-c", "import plistlib,sys; p=sys.argv[1]; value=plistlib.load(open(p,'rb')); plistlib.dump(value,open(p,'wb'),fmt=plistlib.FMT_BINARY)"])
+        .arg(&path).status()?.success());
+    #[cfg(target_os = "macos")]
     assert!(
         std::process::Command::new("/usr/bin/plutil")
             .args(["-convert", "binary1"])

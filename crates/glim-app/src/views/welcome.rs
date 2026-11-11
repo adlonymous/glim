@@ -46,7 +46,11 @@ fn quick_action(
         .bg(surface)
         .flex_1()
         .flex_basis(relative(share))
-        .min_w_0()
+        .min_w(px(if cfg!(target_os = "linux") {
+            160.
+        } else {
+            105.
+        }))
         .h(px(60.))
         .px_3()
         .rounded(px(10.))
@@ -85,7 +89,7 @@ fn quick_action(
                         .flex_shrink_0()
                         .text_size(px(10.))
                         .text_color(cx.theme().muted_foreground)
-                        .child(shortcut),
+                        .child(super::platform_shortcut_label(shortcut)),
                 ),
         )
 }
@@ -151,12 +155,13 @@ pub fn welcome(
             h_flex()
                 .w_full()
                 .gap_3()
+                .when(cfg!(target_os = "linux"), |row| row.flex_wrap())
                 .child(
                     h_flex()
                         .flex_1()
                         .flex_basis(relative(0.5))
                         .items_center()
-                        .min_w_0()
+                        .min_w(px(if cfg!(target_os = "linux") { 280. } else { 0. }))
                         .rounded(px(10.))
                         .border_1()
                         .border_color(workspace_border)
@@ -581,7 +586,10 @@ mod tests {
                     "welcome-new-file",
                 ] {
                     let bounds = window.find(id).bounds();
-                    assert!(bounds.size.width >= px(105.), "{id} too narrow at {width}");
+                    assert!(
+                        bounds.size.width >= px(105.),
+                        "{id} too narrow at {width}: {bounds:?}"
+                    );
                     assert!(bounds.origin.x >= px(0.));
                     assert!(bounds.origin.x + bounds.size.width <= px(width));
                     if let Some(previous) = previous {

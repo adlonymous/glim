@@ -117,7 +117,7 @@ impl Render for Shortcuts {
                                             .py_2()
                                             .border_l_1()
                                             .border_color(cx.theme().border)
-                                            .child(mac),
+                                            .child(crate::views::platform_shortcut_label(mac)),
                                     )
                             })),
                     ),

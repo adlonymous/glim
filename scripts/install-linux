@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+[[ "$(uname -s)" == Linux ]] || { echo 'This installer requires Linux.' >&2; exit 1; }
+profile=release
+if [[ "${1:-}" == --debug ]]; then
+  profile=debug
+  ./scripts/dev build --locked
+else
+  ./scripts/dev build --release --locked
+fi
+bin_dir="$HOME/.local/bin"
+data_dir="${XDG_DATA_HOME:-$HOME/.local/share}"
+[[ "$data_dir" == /* ]] || data_dir="$HOME/.local/share"
+install -Dm755 "target/$profile/glim" "$bin_dir/glim"
+install -Dm644 assets/branding/glim.png "$data_dir/icons/hicolor/1024x1024/apps/glim.png"
+mkdir -p "$data_dir/applications"
+# Quote desktop Exec paths rather than treating HOME as shell syntax.
+exec_path="${bin_dir//\\/\\\\}/glim"
+exec_path="${exec_path//\"/\\\"}"
+exec_path="${exec_path//\$/\\\$}"
+exec_path="${exec_path//\`/\\\`}"
+exec_path="${exec_path//%/%%}"
+printf '[Desktop Entry]\nType=Application\nName=Glim\nComment=View documents, images, code and data\nExec="%s" %%f\nIcon=glim\nTerminal=false\nCategories=Utility;Viewer;\nStartupWMClass=glim\nMimeType=text/plain;text/markdown;application/json;text/csv;application/pdf;image/png;image/jpeg;image/webp;\n' "$exec_path" > "$data_dir/applications/glim.desktop"
+if command -v update-desktop-database >/dev/null; then
+  update-desktop-database "$data_dir/applications"
+fi
+printf 'Installed %s and %s\n' "$bin_dir/glim" "$data_dir/applications/glim.desktop"

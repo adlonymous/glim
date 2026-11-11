@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+# Homebrew's pkg-config may not search the distribution's development libraries.
+if [[ "$(uname -s)" == Linux && -x /usr/bin/pkg-config ]]; then
+  export PKG_CONFIG="${PKG_CONFIG:-/usr/bin/pkg-config}"
+fi
+exec cargo "$@"

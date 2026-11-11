@@ -116,6 +116,7 @@ impl RenderOnce for ReaderToolbarDock {
             return div().into_any_element();
         };
         let controls = std::mem::take(&mut *host.controls.borrow_mut());
+        #[cfg(target_os = "macos")]
         if controls.is_empty() {
             return div().into_any_element();
         }

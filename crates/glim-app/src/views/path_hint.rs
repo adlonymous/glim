@@ -35,6 +35,9 @@ pub(super) struct PathHint {
     target: Option<(String, Bounds<Pixels>)>,
 }
 impl PathHint {
+    pub fn render(&self) -> Option<gpui_kit::AnyElement> {
+        None
+    }
     pub fn hide(&mut self) {
         self.active = None;
         self.target = None;

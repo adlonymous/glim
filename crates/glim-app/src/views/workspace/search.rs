@@ -228,13 +228,14 @@ impl Workspace {
                 .inset_0(),
             )
             .accessibility_label(label.clone())
-            .on_hover(cx.listener(move |view, hovered: &bool, window, _| {
+            .on_hover(cx.listener(move |view, hovered: &bool, window, cx| {
                 if *hovered {
                     view.path_hint
                         .show(&label, "", false, hint_bounds.get(), window);
                 } else {
                     view.path_hint.hide_for("", hint_bounds.get());
                 }
+                cx.notify();
             }))
             .selected(self.search_visible)
             .on_click(cx.listener(|view, _, window, cx| view.show_search(window, cx)))

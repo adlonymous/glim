@@ -20,7 +20,11 @@ pub(super) struct NativeMenu {
     _main_thread: PhantomData<Rc<()>>,
 }
 impl NativeMenu {
-    pub fn new(items: &[(Option<String>, bool)], window: &Window) -> Option<Self> {
+    pub fn new(
+        items: &[(Option<String>, bool)],
+        window: &mut Window,
+        _cx: &mut gpui_kit::App,
+    ) -> Option<Self> {
         let handle = HasWindowHandle::window_handle(window).ok()?;
         let RawWindowHandle::AppKit(handle) = handle.as_raw() else {
             return None;

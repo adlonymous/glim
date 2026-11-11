@@ -1,8 +1,11 @@
 pub(crate) mod about;
 pub mod explorer;
 mod minimap;
+#[cfg_attr(target_os = "linux", path = "linux_menu.rs")]
 mod native_menu_bridge;
+#[cfg(target_os = "macos")]
 mod native_toolbar_bridge;
+#[cfg_attr(target_os = "linux", path = "linux_path_hint.rs")]
 mod path_hint;
 mod reader;
 #[cfg(feature = "reader-measurements")]
@@ -16,6 +19,18 @@ mod file_icons;
 pub(crate) mod integrations;
 
 pub(crate) mod updates;
+
+/// Display keyboard shortcuts with Linux modifier names instead of Mac glyphs.
+pub(crate) fn platform_shortcut_label(shortcut: &str) -> String {
+    if cfg!(target_os = "linux") {
+        shortcut
+            .replace('⌘', "Ctrl+")
+            .replace('⇧', "Shift+")
+            .replace('⌥', "Alt+")
+    } else {
+        shortcut.to_owned()
+    }
+}
 
 /// Brand ink for navigation and primary entry points; tuned for each appearance.
 fn accent(cx: &gpui_kit::App) -> gpui_kit::Hsla {

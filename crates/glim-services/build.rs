@@ -88,6 +88,23 @@ fn main() {
     println!("cargo:rerun-if-changed=../../native/WorkbookPreview.swift");
     println!("cargo:rerun-if-changed=../../native/WordPreview.swift");
     println!("cargo:rerun-if-changed=../../native/PreviewMain.swift");
+    if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("linux") {
+        let status = Command::new("cc")
+            .args([
+                "-O2",
+                "-Wall",
+                "-Wextra",
+                "-Werror",
+                "../../native/Archive.c",
+                "-larchive",
+                "-o",
+            ])
+            .arg(limits_out.join("glim-archive"))
+            .status()
+            .expect("Compile Linux archive helper (requires a C compiler and libarchive)");
+        assert!(status.success(), "Linux archive helper compilation failed");
+        return;
+    }
     if env::var("CARGO_CFG_TARGET_OS").as_deref() != Ok("macos") {
         return;
     }

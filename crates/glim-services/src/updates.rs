@@ -402,6 +402,7 @@ mod tests {
         Ok(())
     }
     #[test]
+    #[cfg(target_os = "macos")]
     fn signed_backup_survives_source_replacement_and_detects_tampering() -> Result<()> {
         let dir = tempfile::tempdir()?;
         let bundle = dir.path().join("Glim.app");

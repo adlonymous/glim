@@ -378,7 +378,8 @@ pub fn run() -> Result<()> {
     });
     let word_wrap = glim_services::preferences::word_wrap();
     let appearance = glim_services::preferences::appearance();
-    let html_preview = glim_services::preferences::preview_mode("html");
+    let html_preview =
+        cfg!(target_os = "macos") && glim_services::preferences::preview_mode("html");
     let markdown_preview = glim_services::preferences::preview_mode("markdown");
     let csv_preview = glim_services::preferences::preview_mode("csv");
     let telemetry_consent = glim_services::preferences::telemetry_consent();
@@ -413,6 +414,8 @@ pub fn run() -> Result<()> {
             startup.observe(cx);
         }
         gpui_kit::init(cx);
+        #[cfg(target_os = "linux")]
+        cx.set_app_identity("glim", "Glim");
         remote::init(remote_catalog, cx);
         finder_integration::init(cx);
         remote_open::init(cx);
@@ -789,6 +792,8 @@ fn workspace_window_options(cx: &App) -> WindowOptions {
     WindowOptions {
         window_bounds: Some(WindowBounds::Windowed(bounds)),
         window_min_size: Some(size(px(800.), px(480.))),
+        #[cfg(target_os = "linux")]
+        app_id: Some("glim".into()),
         titlebar: Some(TitlebarOptions {
             traffic_light_position: Some(point(
                 px(9.),

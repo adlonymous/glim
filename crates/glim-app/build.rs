@@ -35,13 +35,11 @@ fn main() {
     assert!(build.parse::<u64>().is_ok(), "Invalid release build number");
     println!("cargo:rustc-env=GLIM_BUILD_NUMBER={build}");
     println!("cargo:rerun-if-env-changed=GLIM_UPDATE_PUBLIC_KEY");
-    assert!(
-        env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("macos"),
-        "Glim supports only macOS (Apple Silicon and Intel)"
-    );
-    build_native_preview();
-    if env::var_os("CARGO_FEATURE_MACOS_UPDATER").is_some() {
-        build_updater();
+    if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("macos") {
+        build_native_preview();
+        if env::var_os("CARGO_FEATURE_MACOS_UPDATER").is_some() {
+            build_updater();
+        }
     }
 }
 

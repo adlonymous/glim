@@ -146,7 +146,7 @@ impl Workspace {
             }
             None => Icon::empty().path("navigation/wrap.svg"),
         };
-        let button = Button::new(action.id())
+        Button::new(action.id())
             .custom(
                 ButtonCustomVariant::new(cx)
                     .color(if self.toolbar_feedback == Some(action.id()) {
@@ -178,8 +178,7 @@ impl Workspace {
             .disabled(!item.enabled)
             .on_click(cx.listener(move |view, _, window, cx| {
                 view.run_toolbar_action(action, window, cx);
-            }));
-        button
+            }))
     }
 
     pub(super) fn navigation_toolbar(&self, cx: &mut Context<Self>) -> AnyElement {
@@ -232,6 +231,7 @@ impl Workspace {
             .into_any_element()
     }
 
+    #[cfg(target_os = "macos")]
     pub(super) fn floating_reader_toolbar(&self, window: &mut Window, cx: &mut App) -> AnyElement {
         use gpui_kit::component::WindowExt;
         let mut items: Vec<_> = self.reader_actions(cx).into_iter().map(|item| {

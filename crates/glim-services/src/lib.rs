@@ -17,6 +17,8 @@ pub mod inline_images;
 pub mod integrations;
 pub mod json;
 pub mod limits;
+#[cfg(target_os = "linux")]
+pub mod linux_pdf;
 pub mod locale;
 pub mod markdown_preview;
 pub mod markup_images;

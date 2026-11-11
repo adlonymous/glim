@@ -371,7 +371,8 @@ impl Workspace {
             actions.push(Some(TabMenuAction::Trash(reader.document.path.clone())));
         }
         self.context_menu_task = None;
-        let Some(menu) = crate::views::native_menu_bridge::NativeMenu::new(&items, window) else {
+        let Some(menu) = crate::views::native_menu_bridge::NativeMenu::new(&items, window, cx)
+        else {
             return;
         };
         self.context_menu_task = Some(cx.spawn_in(window, async move |view, cx| {
@@ -610,7 +611,7 @@ impl Workspace {
                             .id(("document-tab-label", index))
                             .h_full()
                             .gap(px(5.))
-                            .on_hover(cx.listener(move |view, hovered: &bool, window, _| {
+                            .on_hover(cx.listener(move |view, hovered: &bool, window, cx| {
                                 if *hovered {
                                     view.path_hint.show(
                                         &hint_title,
@@ -622,6 +623,7 @@ impl Workspace {
                                 } else {
                                     view.path_hint.hide_for(&hint_path, hint_bounds.get());
                                 }
+                                cx.notify();
                             }))
                             .child(if self.pending_open_path() == Some(&reader.document.path) {
                                 crate::views::loading_icon(

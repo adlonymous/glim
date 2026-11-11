@@ -933,6 +933,7 @@ impl Explorer {
                 } else {
                     view.path_hint.hide_for(&tooltip_path, hint_bounds.get());
                 }
+                cx.notify();
             }))
             .on_mouse_down(
                 MouseButton::Right,
@@ -1343,7 +1344,7 @@ impl Explorer {
             .map(|(label, _)| (label.map(glim_services::locale::tr), true))
             .collect::<Vec<_>>();
         self.context_menu_task = None;
-        let Some(menu) = super::native_menu_bridge::NativeMenu::new(&titles, window) else {
+        let Some(menu) = super::native_menu_bridge::NativeMenu::new(&titles, window, cx) else {
             return;
         };
         self.context_menu_task = Some(cx.spawn_in(window, async move |view, cx| {
@@ -1403,7 +1404,7 @@ impl Explorer {
             Some(glim_services::locale::tr("Add Folder to Workspace…")),
             true,
         )];
-        let Some(menu) = super::native_menu_bridge::NativeMenu::new(&items, window) else {
+        let Some(menu) = super::native_menu_bridge::NativeMenu::new(&items, window, cx) else {
             return;
         };
         self.context_menu_task = Some(cx.spawn_in(window, async move |view, cx| {
@@ -1443,6 +1444,7 @@ impl Render for Explorer {
             .size_full()
             .min_h_0()
             .key_context("Explorer")
+            .children(self.path_hint.render())
             .track_focus(&self.focus)
             .on_action(cx.listener(|view, _: &Up, _, cx| view.move_selection(false, cx)))
             .on_action(cx.listener(|view, _: &Down, _, cx| view.move_selection(true, cx)))

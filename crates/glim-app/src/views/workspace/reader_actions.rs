@@ -86,6 +86,7 @@ impl ToolbarItem {
         }
     }
 
+    #[cfg(target_os = "macos")]
     pub(super) fn native_symbol(&self) -> &'static str {
         match self.action {
             ToolbarAction::Preview if matches!(self.icon, Some(IconName::ListTree)) => {
@@ -343,6 +344,7 @@ impl super::Workspace {
         document
     }
 
+    #[cfg(target_os = "macos")]
     pub(super) fn run_native_toolbar_action(
         &mut self,
         id: &str,

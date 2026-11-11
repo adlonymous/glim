@@ -153,6 +153,7 @@ pub fn search_page(
 }
 
 /// Move the entry itself to macOS Trash. Never resolve a symlink to its target.
+#[cfg(target_os = "macos")]
 pub fn trash_entry(path: &Path) -> Result<()> {
     use std::{os::unix::fs::PermissionsExt, process::Command};
     let _guard = crate::files::SAVE_LOCK
@@ -175,6 +176,32 @@ pub fn trash_entry(path: &Path) -> Result<()> {
     ensure!(
         output.status.success(),
         "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    Ok(())
+}
+
+/// Move a Linux file to desktop Trash without falling back to permanent deletion.
+#[cfg(target_os = "linux")]
+pub fn trash_entry(path: &Path) -> Result<()> {
+    let _guard = crate::files::SAVE_LOCK
+        .lock()
+        .map_err(|_| anyhow::anyhow!("File operation lock unavailable"))?;
+    let path = std::path::absolute(path)?;
+    ensure!(
+        path.parent().is_some() && path.file_name().is_some(),
+        "Cannot trash a filesystem root"
+    );
+    std::fs::symlink_metadata(&path).context("The item no longer exists")?;
+    let output = std::process::Command::new("gio")
+        .arg("trash")
+        .arg("--")
+        .arg(&path)
+        .output()
+        .context("Linux Trash requires gio (GLib)")?;
+    ensure!(
+        output.status.success(),
+        "Cannot move item to Trash: {}",
         String::from_utf8_lossy(&output.stderr)
     );
     Ok(())

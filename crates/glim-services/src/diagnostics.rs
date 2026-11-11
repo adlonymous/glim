@@ -140,9 +140,16 @@ impl log::Log for Logger {
 }
 
 pub fn initialize() -> io::Result<()> {
-    let directory =
-        PathBuf::from(std::env::var_os("HOME").ok_or_else(|| io::Error::other("HOME missing"))?)
-            .join("Library/Logs/Glim");
+    let home =
+        PathBuf::from(std::env::var_os("HOME").ok_or_else(|| io::Error::other("HOME missing"))?);
+    #[cfg(target_os = "linux")]
+    let directory = std::env::var_os("XDG_STATE_HOME")
+        .map(PathBuf::from)
+        .filter(|path| path.is_absolute())
+        .unwrap_or_else(|| home.join(".local/state"))
+        .join("glim/logs");
+    #[cfg(not(target_os = "linux"))]
+    let directory = home.join("Library/Logs/Glim");
     fs::create_dir_all(&directory)?;
     prune(&directory)?;
     let _ = DIRECTORY.set(directory.clone());

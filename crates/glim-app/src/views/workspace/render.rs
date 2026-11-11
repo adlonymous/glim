@@ -25,10 +25,14 @@ impl Render for Workspace {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         self.update_usage(window, cx);
         let owner = cx.entity().downgrade();
+        #[cfg(target_os = "macos")]
         let native_toolbar = std::rc::Rc::downgrade(&self.reader_toolbar);
         crate::views::reader::set_toolbar_host(
             crate::views::reader::ReaderToolbarHost::new(
-                self.reader_toolbar_collapsed,
+                self.reader_toolbar_collapsed
+                    || self.search_visible
+                    || self.page != Page::Document
+                    || self.active_reader().is_none(),
                 std::rc::Rc::new(move |controls, window, cx| {
                     if let Some(owner) = owner.upgrade() {
                         owner.update(cx, |view, cx| view.content_toolbar(controls, window, cx))
@@ -36,9 +40,10 @@ impl Render for Workspace {
                         div().into_any_element()
                     }
                 }),
-                std::rc::Rc::new(move |window| {
+                std::rc::Rc::new(move |_window| {
+                    #[cfg(target_os = "macos")]
                     if let Some(toolbar) = native_toolbar.upgrade() {
-                        toolbar.update(Bounds::default(), b"[]", false, true, window);
+                        toolbar.update(Bounds::default(), b"[]", false, true, _window);
                     }
                 }),
             ),
@@ -216,7 +221,16 @@ impl Render for Workspace {
                     .min_h_0()
                     .w_full()
                     .child(content)
-                    .child(self.floating_reader_toolbar(window, cx))
+                    .children({
+                        #[cfg(target_os = "macos")]
+                        {
+                            Some(self.floating_reader_toolbar(window, cx))
+                        }
+                        #[cfg(target_os = "linux")]
+                        {
+                            None::<AnyElement>
+                        }
+                    })
                     .child(crate::views::reader::ReaderToolbarDock)
                     .child(
                         canvas(
@@ -557,6 +571,7 @@ impl Render for Workspace {
         v_flex()
             .relative()
             .size_full()
+            .children(self.path_hint.render())
             .track_focus(&self.focus)
             .bg(cx.theme().sidebar)
             .text_color(cx.theme().foreground)

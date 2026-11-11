@@ -275,6 +275,12 @@ pub fn prepare_matroska_file(source: &Path, destination: &Path) -> Result<()> {
     Ok(())
 }
 
+#[cfg(target_os = "linux")]
+pub fn open_associations(_cancelled: std::sync::Arc<std::sync::atomic::AtomicBool>) -> Result<()> {
+    anyhow::bail!("Use your desktop's Open With dialog to select Glim as the default application")
+}
+
+#[cfg(target_os = "macos")]
 pub fn open_associations(cancelled: std::sync::Arc<std::sync::atomic::AtomicBool>) -> Result<()> {
     let executable = std::env::current_exe()?;
     let bundle = executable
@@ -295,6 +301,7 @@ pub fn open_associations(cancelled: std::sync::Arc<std::sync::atomic::AtomicBool
     )
 }
 
+#[cfg(target_os = "macos")]
 fn launch(
     configuration: NativeRequest,
     cancelled: std::sync::Arc<std::sync::atomic::AtomicBool>,
