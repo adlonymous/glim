@@ -11,10 +11,15 @@ use gpui_kit::{
     *,
 };
 
+fn navigation_column_width(window_width: f32, ratio: f32, minimum: f32) -> f32 {
+    let maximum = window_width * 0.35;
+    (window_width * ratio).clamp(minimum.min(maximum), maximum)
+}
+
 impl Workspace {
     pub(super) fn workspace_column_width(&self, window_width: f32) -> f32 {
         if self.sidebar_visible {
-            (window_width * self.sidebar_ratio).clamp(160., window_width * 0.35)
+            navigation_column_width(window_width, self.sidebar_ratio, 160.)
         } else {
             48.
         }
@@ -22,7 +27,7 @@ impl Workspace {
 
     pub(super) fn explorer_column_width(&self, window_width: f32) -> f32 {
         if self.explorer_visible {
-            (window_width * self.explorer_ratio).clamp(200., window_width * 0.35)
+            navigation_column_width(window_width, self.explorer_ratio, 200.)
         } else {
             40.
         }
@@ -179,5 +184,19 @@ impl Workspace {
                     ),
             )
             .into_any_element()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn navigation_columns_fit_tiled_windows_below_the_declared_minimum() {
+        for width in [0., 200., 388., 480., 800., 1100.] {
+            for (ratio, minimum) in [(0.15, 160.), (0.18, 200.)] {
+                let column = super::navigation_column_width(width, ratio, minimum);
+                assert!(column.is_finite());
+                assert!(column >= 0. && column <= width * 0.35);
+            }
+        }
     }
 }

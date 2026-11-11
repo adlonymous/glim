@@ -8,6 +8,7 @@
 - Linux verification: `./scripts/dev check --workspace --all-targets --locked`, `./scripts/dev fmt --all -- --check`, `./scripts/dev clippy --workspace --all-targets --locked -- -D warnings`, `./scripts/dev test --workspace --locked`, and `./scripts/dev build --locked`.
 - Linux installation: `./scripts/install-linux --debug` for a development build; omit `--debug` for release optimization. Do not change default file associations automatically.
 - Read `docs/linux.md` for platform dependencies and limitations, and `docs/architecture.md#linux-platform-boundary` before changing Linux preview/menu boundaries. Keep unavailable native features explicit rather than silently presenting empty previews.
+- Linux tiling compositors can ignore `window_min_size`. Keep navigation bounds in `views/workspace/layout.rs` valid below the declared minimum; retain its narrow-window regression test.
 - Upstream macOS workflow instructions below apply only on macOS; the Linux fork instructions take precedence.
 
 ## 快速迭代与验收
